@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { words } from "@/lib/word";
+import { FaArrowCircleUp, FaArrowCircleDown } from "react-icons/fa";
 import { RiResetLeftFill } from "react-icons/ri";
 
 // Shuffle and get random words
@@ -16,48 +17,35 @@ export default function Page() {
   const [typed, setTyped] = useState('');
   const [results, setResults] = useState<('correct' | 'wrong' | null)[]>([]);
   const [timer, setTimer] = useState(30);
-  const [hasStarted, setHasStarted] = useState(false);
+  const [initialTimer, setInitialTimer] = useState(30);
+  const [maxtimer, setmaxTimer] = useState(60);
+  const mintimer = 30;
 
+  const [hasStarted, setHasStarted] = useState(false);
   const [correctWordCount, setCorrectWordCount] = useState(0);
   const [typedWordCount, setTypedWordCount] = useState(0);
 
-  // Load random words on first render
+  // Load words on mount
   useEffect(() => {
     const randomWords = getRandomWords(words, 32);
     setWordList(randomWords);
     setResults(new Array(32).fill(null));
   }, []);
 
-  // Reset logic
-  const handleReload = () => {
-    const newWords = getRandomWords(words, 32);
-    setWordList(newWords);
-    setResults(new Array(32).fill(null));
-    setTyped('');
-    setCurrentWordIndex(0);
-    setCorrectWordCount(0);
-    setTypedWordCount(0);
-    setHasStarted(false);
-    setTimer(30);
-  };
-
   // Timer countdown
   useEffect(() => {
     if (!hasStarted || timer === 0) return;
-
     const timeout = setTimeout(() => {
       setTimer((prev) => prev - 1);
     }, 1000);
-
     return () => clearTimeout(timeout);
   }, [hasStarted, timer]);
 
-  // Handle typing logic
+  // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (timer === 0) return; // ⛔ stop typing when timer ends
-
-      if (!hasStarted) setHasStarted(true); // ⏱️ start timer on first key
+      if (timer === 0) return;
+      if (!hasStarted) setHasStarted(true);
 
       if (e.key === ' ') {
         e.preventDefault();
@@ -87,18 +75,60 @@ export default function Page() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [typed, wordList, currentWordIndex, results, timer, hasStarted]);
 
-  // Calculate WPM and Accuracy
+  // Handle reset
+  const handleReload = () => {
+    const newWords = getRandomWords(words, 32);
+    setWordList(newWords);
+    setResults(new Array(32).fill(null));
+    setTyped('');
+    setCurrentWordIndex(0);
+    setCorrectWordCount(0);
+    setTypedWordCount(0);
+    setHasStarted(false);
+    setTimer(30);
+  };
+
+  const handleIncrease = () => {
+    if (timer < maxtimer && !hasStarted) {
+      setTimer((prev) => prev + 5);
+      setInitialTimer((prev) => prev + 5);
+    }
+  };
+
+  const handleDecrease = () => {
+    if (timer > mintimer && !hasStarted) {
+      setTimer((prev) => prev - 5);
+      setInitialTimer((prev) => prev - 5);
+    }
+  };
+
+  // Stats
   const accuracy = typedWordCount === 0 ? 0 : Math.round((correctWordCount / typedWordCount) * 100);
-  const wpm = Math.round((correctWordCount / ((30 - timer) / 60))) || 0;
+  const timeUsed = initialTimer - timer;
+  const wpm = timeUsed > 0 ? Math.round((correctWordCount / (timeUsed / 60))) : 0;
 
   return (
     <div className="p-4 min-h-screen flex flex-col items-center justify-center gap-10">
+      
+      {/* Timer Controls */}
+      <div className="flex items-center gap-4 mb-4">
+        <FaArrowCircleDown
+          className={`text-3xl cursor-pointer ${timer <= mintimer || hasStarted ? 'text-gray-500 cursor-not-allowed' : 'text-yellow-500 hover:text-yellow-300'}`}
+          onClick={handleDecrease}
+        />
+       <div className="text-4xl font-bold text-center text-yellow-500">{timer}</div>
+        <FaArrowCircleUp
+          className={`text-3xl cursor-pointer ${timer >= maxtimer || hasStarted ? 'text-gray-500 cursor-not-allowed' : 'text-yellow-500 hover:text-yellow-300'}`}
+          onClick={handleIncrease}
+        />
+      </div>
+
       {/* Timer */}
-      <div className="text-4xl font-bold text-center text-yellow-500">{timer}</div>
+    
 
       {/* Time up message */}
       {timer === 0 && (
-        <div className="text-3xl font-bold text-red-500"> Time's Up!</div>
+        <div className="text-3xl font-bold text-red-500">Time's Up!</div>
       )}
 
       {/* Word display */}
