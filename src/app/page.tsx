@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { words } from "@/lib/word";
 import { FaArrowCircleUp, FaArrowCircleDown } from "react-icons/fa";
 import { RiResetLeftFill } from "react-icons/ri";
+import Navbar from "./Components/Navbar";
 
-// Shuffle and get random words
 function getRandomWords(list: string[], count: number) {
   const shuffled = [...list].sort(() => Math.random() - 0.5);
   return shuffled.slice(0, count);
@@ -25,23 +25,24 @@ export default function Page() {
   const [correctWordCount, setCorrectWordCount] = useState(0);
   const [typedWordCount, setTypedWordCount] = useState(0);
 
-  // Load words on mount
   useEffect(() => {
-    const randomWords = getRandomWords(words, 32);
+    const randomWords = getRandomWords(words, 40);
     setWordList(randomWords);
     setResults(new Array(32).fill(null));
   }, []);
 
-  // Timer countdown
-  useEffect(() => {
-    if (!hasStarted || timer === 0) return;
-    const timeout = setTimeout(() => {
-      setTimer((prev) => prev - 1);
-    }, 1000);
-    return () => clearTimeout(timeout);
-  }, [hasStarted, timer]);
+ useEffect(() => {
+  if (!hasStarted || timer === 0) return;
+  if (currentWordIndex === wordList.length - 1) {
+    setHasStarted(false); // Stop the timer if last word reached
+    return;
+  }
+  const timeout = setTimeout(() => {
+    setTimer((prev) => prev - 1);
+  }, 1000);
+  return () => clearTimeout(timeout);
+}, [hasStarted, timer, currentWordIndex, wordList.length]);
 
-  // Keyboard handling
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (timer === 0) return;
@@ -61,7 +62,11 @@ export default function Page() {
         const newResults = [...results];
         newResults[currentWordIndex] = isCorrect ? 'correct' : 'wrong';
         setResults(newResults);
-
+ const isLastWord = currentWordIndex === wordList.length - 1;
+  if (isLastWord) {
+    setHasStarted(false); // Stop the timer
+    return;
+  }
         setCurrentWordIndex((prev) => Math.min(prev + 1, wordList.length - 1));
         setTyped('');
       } else if (e.key === 'Backspace') {
@@ -75,7 +80,6 @@ export default function Page() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [typed, wordList, currentWordIndex, results, timer, hasStarted]);
 
-  // Handle reset
   const handleReload = () => {
     const newWords = getRandomWords(words, 32);
     setWordList(newWords);
@@ -102,51 +106,46 @@ export default function Page() {
     }
   };
 
-  // Stats
   const accuracy = typedWordCount === 0 ? 0 : Math.round((correctWordCount / typedWordCount) * 100);
   const timeUsed = initialTimer - timer;
   const wpm = timeUsed > 0 ? Math.round((correctWordCount / (timeUsed / 60))) : 0;
 
   return (
-    <div className="p-4 min-h-screen flex flex-col items-center justify-center gap-10">
-      
-      {/* Timer Controls */}
+   <div className="p-4 min-h-screen flex flex-col items-center justify-center gap-10 bg-gradient-to-br from-black to-gray-900 text-white">
+
+      <Navbar />
+
       <div className="flex items-center gap-4 mb-4">
         <FaArrowCircleDown
-          className={`text-3xl cursor-pointer ${timer <= mintimer || hasStarted ? 'text-gray-500 cursor-not-allowed' : 'text-yellow-500 hover:text-yellow-300'}`}
+          className={`text-3xl cursor-pointer ${timer <= mintimer || hasStarted ? 'text-gray-400' : 'text-yellow-400 hover:text-yellow-300'}`}
           onClick={handleDecrease}
         />
-       <div className="text-4xl font-bold text-center text-yellow-500">{timer}</div>
+        <div className="text-4xl font-bold text-center">{timer}</div>
         <FaArrowCircleUp
-          className={`text-3xl cursor-pointer ${timer >= maxtimer || hasStarted ? 'text-gray-500 cursor-not-allowed' : 'text-yellow-500 hover:text-yellow-300'}`}
+          className={`text-3xl cursor-pointer ${timer >= maxtimer || hasStarted ? 'text-gray-400' : 'text-yellow-400 hover:text-yellow-300'}`}
           onClick={handleIncrease}
         />
       </div>
 
-      {/* Timer */}
-    
-
-      {/* Time up message */}
       {timer === 0 && (
-        <div className="text-3xl font-bold text-red-500">Time's Up!</div>
+        <div className="text-3xl font-bold text-red-300">Time's Up!</div>
       )}
 
-      {/* Word display */}
       <div className="flex flex-wrap gap-3 justify-center items-center max-w-5xl">
         {wordList.map((word, index) => {
           const isActive = index === currentWordIndex;
           const result = results[index];
 
           let color = 'text-gray-400';
-          if (isActive) color = 'text-black';
+          if (isActive) color = 'text-white';
           if (result === 'correct') color = 'text-green-400';
-          if (result === 'wrong') color = 'text-red-500';
+          if (result === 'wrong') color = 'text-red-400';
 
           return (
             <span key={index} className={`relative text-4xl font-mono ${color}`}>
               {isActive ? (
                 <span>
-                  <span className="text-blue-400">{typed}</span>
+                  <span className="text-yellow-300">{typed}</span>
                   <span className="animate-blink">|</span>
                   <span className="opacity-30">{word.slice(typed.length)}</span>
                 </span>
@@ -158,14 +157,19 @@ export default function Page() {
         })}
       </div>
 
-      <hr className="w-full border-gray-400" />
+      <hr className="w-full border-gray-500 mt-6" />
 
-      {/* Results */}
-      <div className="mt-10 text-center flex justify-between max-w-5xl items-center w-full px-8">
-        <div className="text-2xl font-semibold text-blue-500">WPM: {wpm}</div>
-        <RiResetLeftFill onClick={handleReload} className="text-3xl cursor-pointer hover:text-yellow-500" />
-        <div className="text-2xl font-semibold text-green-500">Accuracy: {accuracy}%</div>
-      </div>
+     <div className="mt-6 flex justify-between items-center max-w-5xl w-full px-8 text-white">
+  <div className="text-2xl font-semibold font-mono text-yellow-300">WPM: {wpm}</div>
+
+  <div className="flex items-center gap-2 cursor-pointer hover:text-yellow-200" onClick={handleReload}>
+    <RiResetLeftFill className="text-3xl" />
+    <span className="text-xl font-medium font-mono">Start Again</span>
+  </div>
+
+  <div className="text-2xl font-semibold text-green-300 font-mono">Accuracy: {accuracy}%</div>
+</div>
+
     </div>
   );
 }

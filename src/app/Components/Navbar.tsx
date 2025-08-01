@@ -1,23 +1,21 @@
-'use client'
+'use client';
 
-import Link from 'next/link'
-import { Keyboard } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import Link from 'next/link';
+import { Keyboard } from 'lucide-react';
 
 export default function Navbar() {
   return (
-    <header className="w-full px-4 py-3 flex justify-between items-center  bg-white dark:bg-black">
-      <Link href="/" className="flex items-center gap-2">
-        <Keyboard className="w-6 h-6 text-blue-600" />
-        <span className="font-bold text-xl text-black dark:text-white text-6xl">TypeRush</span>
+    <header className="fixed top-0 left-0 w-full px-6 py-4 z-50   flex justify-between items-center">
+      <Link href="/" className="flex items-center gap-3 mt-3">
+        {/* <Keyboard className="w-8 h-8 text-white" /> */}
+        <span className="font-extrabold text-white text-5xl tracking-wide font-mono">
+          TURBOTYPE
+        </span>
       </Link>
 
-      <nav className="flex items-center gap-4">
-        <Link href="/test">
-          <Button variant="ghost">LOGIN </Button>
-        </Link>
-        
-      </nav>
+      {/* <nav className="text-white font-medium text-lg">
+        Practice Mode
+      </nav> */}
     </header>
-  )
+  );
 }
