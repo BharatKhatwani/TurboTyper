@@ -18,7 +18,7 @@ export default function Page() {
   const [results, setResults] = useState<('correct' | 'wrong' | null)[]>([]);
   const [timer, setTimer] = useState(30);
   const [initialTimer, setInitialTimer] = useState(30);
-  const [maxtimer, setmaxTimer] = useState(60);
+  const [maxtimer] = useState(60);
   const mintimer = 30;
 
   const [hasStarted, setHasStarted] = useState(false);
@@ -128,7 +128,7 @@ export default function Page() {
       </div>
 
       {timer === 0 && (
-        <div className="text-3xl font-bold text-red-300">Time's Up!</div>
+       <div className="text-3xl font-bold text-red-300">{"Time's Up!"}</div>
       )}
 
       <div className="flex flex-wrap gap-3 justify-center items-center max-w-5xl">
