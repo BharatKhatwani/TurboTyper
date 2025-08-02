@@ -5,6 +5,7 @@ import { words } from "@/lib/word";
 import { FaArrowCircleUp, FaArrowCircleDown } from "react-icons/fa";
 import { RiResetLeftFill } from "react-icons/ri";
 import Navbar from "./Components/Navbar";
+import { ThemeProvider } from "./Components/ThemeContext";
 
 function getRandomWords(list: string[], count: number) {
   const shuffled = [...list].sort(() => Math.random() - 0.5);
@@ -31,17 +32,17 @@ export default function Page() {
     setResults(new Array(32).fill(null));
   }, []);
 
- useEffect(() => {
-  if (!hasStarted || timer === 0) return;
-  if (currentWordIndex === wordList.length - 1) {
-    setHasStarted(false); // Stop the timer if last word reached
-    return;
-  }
-  const timeout = setTimeout(() => {
-    setTimer((prev) => prev - 1);
-  }, 1000);
-  return () => clearTimeout(timeout);
-}, [hasStarted, timer, currentWordIndex, wordList.length]);
+  useEffect(() => {
+    if (!hasStarted || timer === 0) return;
+    if (currentWordIndex === wordList.length - 1) {
+      setHasStarted(false);
+      return;
+    }
+    const timeout = setTimeout(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [hasStarted, timer, currentWordIndex, wordList.length]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -62,11 +63,13 @@ export default function Page() {
         const newResults = [...results];
         newResults[currentWordIndex] = isCorrect ? 'correct' : 'wrong';
         setResults(newResults);
- const isLastWord = currentWordIndex === wordList.length - 1;
-  if (isLastWord) {
-    setHasStarted(false); // Stop the timer
-    return;
-  }
+
+        const isLastWord = currentWordIndex === wordList.length - 1;
+        if (isLastWord) {
+          setHasStarted(false);
+          return;
+        }
+
         setCurrentWordIndex((prev) => Math.min(prev + 1, wordList.length - 1));
         setTyped('');
       } else if (e.key === 'Backspace') {
@@ -81,15 +84,15 @@ export default function Page() {
   }, [typed, wordList, currentWordIndex, results, timer, hasStarted]);
 
   const handleReload = () => {
-    const newWords = getRandomWords(words, 32);
+    const newWords = getRandomWords(words, 40);
     setWordList(newWords);
-    setResults(new Array(32).fill(null));
+    setResults(new Array(40).fill(null));
     setTyped('');
     setCurrentWordIndex(0);
     setCorrectWordCount(0);
     setTypedWordCount(0);
     setHasStarted(false);
-    setTimer(30);
+    setTimer(40);
   };
 
   const handleIncrease = () => {
@@ -111,65 +114,70 @@ export default function Page() {
   const wpm = timeUsed > 0 ? Math.round((correctWordCount / (timeUsed / 60))) : 0;
 
   return (
-   <div className="p-4 min-h-screen flex flex-col items-center justify-center gap-10 bg-gradient-to-br from-black to-gray-900 text-white">
+    <ThemeProvider>
+      <div className="p-4 min-h-screen flex flex-col items-center justify-center gap-10 bg-white text-black dark:bg-gradient-to-br dark:from-black dark:to-gray-900 dark:text-white transition-colors duration-300">
+        <Navbar />
 
-      <Navbar />
+        <div className="flex items-center gap-4 mb-4">
+          <FaArrowCircleDown
+            className={`text-3xl cursor-pointer ${timer <= mintimer || hasStarted ? 'text-gray-400' : 'text-yellow-600 dark:text-yellow-400 hover:text-yellow-400 dark:hover:text-yellow-300'}`}
+            onClick={handleDecrease}
+          />
+          <div className="text-4xl font-bold text-center">{timer}</div>
+          <FaArrowCircleUp
+            className={`text-3xl cursor-pointer ${timer >= maxtimer || hasStarted ? 'text-gray-400' : 'text-yellow-600 dark:text-yellow-400 hover:text-yellow-400 dark:hover:text-yellow-300'}`}
+            onClick={handleIncrease}
+          />
+        </div>
 
-      <div className="flex items-center gap-4 mb-4">
-        <FaArrowCircleDown
-          className={`text-3xl cursor-pointer ${timer <= mintimer || hasStarted ? 'text-gray-400' : 'text-yellow-400 hover:text-yellow-300'}`}
-          onClick={handleDecrease}
-        />
-        <div className="text-4xl font-bold text-center">{timer}</div>
-        <FaArrowCircleUp
-          className={`text-3xl cursor-pointer ${timer >= maxtimer || hasStarted ? 'text-gray-400' : 'text-yellow-400 hover:text-yellow-300'}`}
-          onClick={handleIncrease}
-        />
+        {timer === 0 && (
+          <div className="text-3xl font-bold text-red-600 dark:text-red-300">{"Time's Up!"}</div>
+        )}
+
+        <div className="flex flex-wrap gap-3 justify-center items-center max-w-5xl">
+          {wordList.map((word, index) => {
+            const isActive = index === currentWordIndex;
+            const result = results[index];
+
+            let color = 'text-gray-500 dark:text-gray-400';
+            if (isActive) color = 'text-black dark:text-white';
+            if (result === 'correct') color = 'text-green-600 dark:text-green-400';
+            if (result === 'wrong') color = 'text-red-600 dark:text-red-400';
+
+            return (
+              <span key={index} className={`relative text-4xl font-mono ${color}`}>
+                {isActive ? (
+                  <span>
+                    <span className="text-yellow-600 dark:text-yellow-300">{typed}</span>
+                    <span className="animate-blink">|</span>
+                    <span className="opacity-30">{word.slice(typed.length)}</span>
+                  </span>
+                ) : (
+                  word
+                )}
+              </span>
+            );
+          })}
+        </div>
+
+        <hr className="w-full border-gray-300 dark:border-gray-600 mt-6" />
+
+        <div className="mt-6 flex justify-between items-center max-w-5xl w-full px-8">
+          <div className="text-2xl font-semibold font-mono text-yellow-600 dark:text-yellow-300">WPM: {wpm}</div>
+
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:text-yellow-700 dark:hover:text-yellow-200"
+            onClick={handleReload}
+          >
+            <RiResetLeftFill className="text-3xl" />
+            <span className="text-xl font-medium font-mono">Start Again</span>
+          </div>
+
+          <div className="text-2xl font-semibold text-green-600 dark:text-green-300 font-mono">
+            Accuracy: {accuracy}%
+          </div>
+        </div>
       </div>
-
-      {timer === 0 && (
-       <div className="text-3xl font-bold text-red-300">{"Time's Up!"}</div>
-      )}
-
-      <div className="flex flex-wrap gap-3 justify-center items-center max-w-5xl">
-        {wordList.map((word, index) => {
-          const isActive = index === currentWordIndex;
-          const result = results[index];
-
-          let color = 'text-gray-400';
-          if (isActive) color = 'text-white';
-          if (result === 'correct') color = 'text-green-400';
-          if (result === 'wrong') color = 'text-red-400';
-
-          return (
-            <span key={index} className={`relative text-4xl font-mono ${color}`}>
-              {isActive ? (
-                <span>
-                  <span className="text-yellow-300">{typed}</span>
-                  <span className="animate-blink">|</span>
-                  <span className="opacity-30">{word.slice(typed.length)}</span>
-                </span>
-              ) : (
-                word
-              )}
-            </span>
-          );
-        })}
-      </div>
-
-      <hr className="w-full border-gray-500 mt-6" />
-
-     <div className="mt-6 flex justify-between items-center max-w-5xl w-full px-8 text-white">
-  <div className="text-2xl font-semibold font-mono text-yellow-300">WPM: {wpm}</div>
-
-  <div className="flex items-center gap-2 cursor-pointer hover:text-yellow-200" onClick={handleReload}>
-    <RiResetLeftFill className="text-3xl" />
-    <span className="text-xl font-medium font-mono">Start Again</span>
-  </div>
-
-  <div className="text-2xl font-semibold text-green-300 font-mono">Accuracy: {accuracy}%</div>
-</div>
-
-    </div>
+    </ThemeProvider>
   );
 }

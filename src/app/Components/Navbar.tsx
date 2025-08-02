@@ -1,21 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-// import { Keyboard } from 'lucide-react';
+import { CiLight } from "react-icons/ci";
+import { MdDarkMode } from "react-icons/md";
+import { useTheme } from './ThemeContext'; // make sure this path is correct
 
 export default function Navbar() {
+  const { theme, toggleTheme } = useTheme();
+
   return (
-    <header className="fixed top-0 left-0 w-full px-6 py-4 z-50   flex justify-between items-center">
+    <header className="fixed top-0 left-0 w-full px-6 py-4 z-50 flex justify-between items-center">
       <Link href="/" className="flex items-center gap-3 mt-3">
-        {/* <Keyboard className="w-8 h-8 text-white" /> */}
-        <span className="font-extrabold text-white text-5xl tracking-wide font-mono">
+        <span className="font-extrabold text-5xl tracking-wide font-mono text-black dark:text-white">
           TURBOTYPE
         </span>
       </Link>
 
-      {/* <nav className="text-white font-medium text-lg">
-        Practice Mode
-      </nav> */}
+      <button
+        onClick={toggleTheme}
+        className="text-3xl text-black dark:text-white hover:scale-110 transition-transform cursor-pointer duration-300"
+        aria-label="Toggle theme"
+      >
+        {theme === 'dark' ? <CiLight /> : <MdDarkMode />}
+      </button>
     </header>
   );
 }

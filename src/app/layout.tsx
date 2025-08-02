@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 // import Navbar from "./Components/Navbar";
+import { ThemeProvider } from "./Components/ThemeContext";
 
 // ✅ Correct import path
 
@@ -33,7 +34,7 @@ export default function RootLayout({
       >
         {/* ✅ Render component properly */}
        
-        {children}
+       <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
